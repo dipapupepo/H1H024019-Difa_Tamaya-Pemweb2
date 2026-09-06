@@ -1,0 +1,11 @@
+# Laravel
+.env
+.env.*
+latihan-laravel/vendor/
+
+# Go
+*.exe
+
+# OS
+.DS_Store
+Thumbs.db
