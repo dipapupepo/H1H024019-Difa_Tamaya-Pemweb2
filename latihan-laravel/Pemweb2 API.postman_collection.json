@@ -1,0 +1,283 @@
+{
+  "info": {
+    "_postman_id": "c706f161-8071-4958-ab4f-92ccaf6d6cea",
+    "name": "Pemweb2 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58420982",
+    "_collection_link": "https://go.postman.co/collection/58420982-c706f161-8071-4958-ab4f-92ccaf6d6cea?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "GET Mahasiswa",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": ""
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Mahasiswa",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"program_studi_id\": 1,\r\n    \"nim\": \"H1A125998\",\r\n    \"nama\": \"Difa Tamaya\",\r\n    \"email\": \"difa125998@gmail.com\",\r\n    \"angkatan\": 2025,\r\n    \"ipk\": 3.65,\r\n    \"aktif\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/mahasiswa",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mahasiswa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "PUT Mahasiswa",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"nama\": \"Difa Tamaya Update\",\r\n    \"ipk\": 3.75\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/mahasiswa/32",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mahasiswa",
+            "32"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DELETE Mahasiswa",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/mahasiswa/32",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mahasiswa",
+            "32"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Matakuliah",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": ""
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Matakuliah",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"kode\": \"TK106\",\r\n    \"nama\": \"Arsitektur Komputer\",\r\n    \"sks\": 3,\r\n    \"semester\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/matakuliah",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "matakuliah"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "PUT Matakuliah",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"nama\": \"Arsitektur Komputer dan Organisasi\",\r\n    \"sks\": 3,\r\n    \"semester\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/matakuliah/7",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "matakuliah",
+            "7"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DELETE Matakuliah",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/matakuliah/7",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "matakuliah",
+            "7"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Mahasiswa berdasarkan Program Studi",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/program-studi/1/mahasiswa?per_halaman=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "program-studi",
+            "1",
+            "mahasiswa"
+          ],
+          "query": [
+            {
+              "key": "per_halaman",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Parameter field",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/mahasiswa?fields=nim,nama,ipk&per_halaman=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "mahasiswa"
+          ],
+          "query": [
+            {
+              "key": "fields",
+              "value": "nim,nama,ipk"
+            },
+            {
+              "key": "per_halaman",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
