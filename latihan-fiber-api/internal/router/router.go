@@ -9,6 +9,7 @@ import (
 func Daftarkan(app *fiber.App) {
 	api := app.Group("/api")
 
+	// Endpoint untuk mengecek status API
 	api.Get("/status", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"sukses": true,
@@ -16,9 +17,16 @@ func Daftarkan(app *fiber.App) {
 		})
 	})
 
+	// Endpoint Program Studi
+	api.Get("/program-studi", handler.DaftarProgramStudi)
+
+	// Endpoint Mahasiswa
 	mahasiswa := api.Group("/mahasiswa")
 
 	mahasiswa.Get("/", handler.DaftarMahasiswa)
-	mahasiswa.Get("/nim/:nim", handler.CariMahasiswaNIM)
+	mahasiswa.Post("/", handler.BuatMahasiswa)
 	mahasiswa.Get("/:id", handler.DetailMahasiswa)
+	mahasiswa.Put("/:id", handler.PerbaruiMahasiswa)
+	mahasiswa.Delete("/:id", handler.HapusMahasiswa)
+	mahasiswa.Post("/:id/pulihkan", handler.PulihkanMahasiswa)
 }

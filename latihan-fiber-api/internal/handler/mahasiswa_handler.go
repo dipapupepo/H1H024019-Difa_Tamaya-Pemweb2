@@ -1,73 +1,194 @@
 package handler
 
 import (
-	"sort"
+	"errors"
 	"strconv"
 
-	"latihan-fiber-api/internal/model"
-
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
+
+	"latihan-fiber-api/internal/model"
+	"latihan-fiber-api/internal/repository"
 )
 
-// DaftarMahasiswa menampilkan daftar mahasiswa,
-// memfilter berdasarkan angkatan, dan mengurutkan data.
 func DaftarMahasiswa(c fiber.Ctx) error {
-	angkatan := c.Query("angkatan", "")
-	urut := c.Query("urut", "")
+	halaman, _ := strconv.Atoi(c.Query("halaman", "1"))
+	perHalaman, _ := strconv.Atoi(c.Query("per_halaman", "10"))
+	angkatan, _ := strconv.Atoi(c.Query("angkatan", "0"))
 
-	hasil := make([]model.Mahasiswa, 0, len(model.Daftar))
-	var nilaiAngkatan int
-
-	// Validasi parameter angkatan.
-	if angkatan != "" {
-		var err error
-		nilaiAngkatan, err = strconv.Atoi(angkatan)
-		if err != nil {
-			return fiber.NewError(
-				fiber.StatusBadRequest,
-				"Parameter angkatan harus berupa angka",
-			)
-		}
+	if halaman < 1 {
+		halaman = 1
 	}
 
-	// Filter mahasiswa berdasarkan angkatan.
-	for i := 0; i < len(model.Daftar); i++ {
-		if angkatan == "" || model.Daftar[i].Angkatan == nilaiAngkatan {
-			hasil = append(hasil, model.Daftar[i])
-		}
+	if perHalaman < 1 || perHalaman > 100 {
+		perHalaman = 10
 	}
 
-	// Pengurutan berdasarkan nama atau IPK.
-	switch urut {
-	case "nama":
-		sort.Slice(hasil, func(i, j int) bool {
-			return hasil[i].Nama < hasil[j].Nama
-		})
+	filter := repository.FilterMahasiswa{
+		Cari:       c.Query("cari", ""),
+		Angkatan:   angkatan,
+		Halaman:    halaman,
+		PerHalaman: perHalaman,
+	}
 
-	case "ipk":
-		sort.Slice(hasil, func(i, j int) bool {
-			return hasil[i].Ipk > hasil[j].Ipk
-		})
+	daftar, total, err := repository.Ambil(filter)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Gagal mengambil data")
+	}
 
-	case "":
-		// Jika urut tidak diisi, gunakan urutan data awal.
+	totalHalaman := int(total) / perHalaman
 
-	default:
-		return fiber.NewError(
-			fiber.StatusBadRequest,
-			"Parameter urut harus berupa nama atau ipk",
-		)
+	if int(total)%perHalaman != 0 {
+		totalHalaman = totalHalaman + 1
 	}
 
 	return c.JSON(fiber.Map{
 		"sukses": true,
-		"data":   hasil,
+		"data":   daftar,
+		"meta": fiber.Map{
+			"halaman":       halaman,
+			"per_halaman":   perHalaman,
+			"total":         total,
+			"total_halaman": totalHalaman,
+		},
 	})
 }
 
-// DetailMahasiswa menampilkan detail mahasiswa berdasarkan ID.
 func DetailMahasiswa(c fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "ID harus berupa angka")
+	}
+
+	mahasiswa, err := repository.AmbilPerId(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, "Mahasiswa tidak ditemukan")
+		}
+
+		return fiber.NewError(fiber.StatusInternalServerError, "Gagal mengambil data")
+	}
+
+	return c.JSON(fiber.Map{
+		"sukses": true,
+		"data":   mahasiswa,
+	})
+}
+
+func BuatMahasiswa(c fiber.Ctx) error {
+	var permintaan PermintaanMahasiswa
+
+	err := c.Bind().Body(&permintaan)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Format body tidak valid")
+	}
+
+	aktif := true
+
+	if permintaan.Aktif != nil {
+		aktif = *permintaan.Aktif
+	}
+
+	mahasiswa := model.Mahasiswa{
+		ProgramStudiID: permintaan.ProgramStudiID,
+		Nim:            permintaan.Nim,
+		Nama:           permintaan.Nama,
+		Email:          permintaan.Email,
+		Angkatan:       permintaan.Angkatan,
+		Ipk:            permintaan.Ipk,
+		Aktif:          aktif,
+	}
+
+	err = repository.Simpan(&mahasiswa)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "Gagal menyimpan data, periksa keunikan NIM dan email")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"sukses": true,
+		"pesan":  "Data mahasiswa berhasil dibuat",
+		"data":   mahasiswa,
+	})
+}
+
+func PerbaruiMahasiswa(c fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "ID harus berupa angka")
+	}
+
+	mahasiswa, err := repository.AmbilPerId(uint(id))
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "Mahasiswa tidak ditemukan")
+	}
+
+	var permintaan PermintaanMahasiswa
+
+	err = c.Bind().Body(&permintaan)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Format body tidak valid")
+	}
+
+	if permintaan.Nama != "" {
+		mahasiswa.Nama = permintaan.Nama
+	}
+
+	if permintaan.Email != "" {
+		mahasiswa.Email = permintaan.Email
+	}
+
+	if permintaan.Angkatan > 0 {
+		mahasiswa.Angkatan = permintaan.Angkatan
+	}
+
+	if permintaan.Ipk > 0 {
+		mahasiswa.Ipk = permintaan.Ipk
+	}
+
+	if permintaan.ProgramStudiID > 0 {
+		mahasiswa.ProgramStudiID = permintaan.ProgramStudiID
+	}
+
+	if permintaan.Aktif != nil {
+		mahasiswa.Aktif = *permintaan.Aktif
+	}
+
+	err = repository.Perbarui(&mahasiswa)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "Gagal memperbarui data")
+	}
+
+	return c.JSON(fiber.Map{
+		"sukses": true,
+		"pesan":  "Data mahasiswa berhasil diperbarui",
+		"data":   mahasiswa,
+	})
+}
+
+func HapusMahasiswa(c fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "ID harus berupa angka")
+	}
+
+	mahasiswa, err := repository.AmbilPerId(uint(id))
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "Mahasiswa tidak ditemukan")
+	}
+
+	err = repository.Hapus(&mahasiswa)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Gagal menghapus data")
+	}
+
+	return c.JSON(fiber.Map{
+		"sukses": true,
+		"pesan":  "Data mahasiswa berhasil dihapus",
+	})
+}
+func PulihkanMahasiswa(c fiber.Ctx) error {
+	id, err := strconv.Atoi(c.Params("id"))
+
 	if err != nil {
 		return fiber.NewError(
 			fiber.StatusBadRequest,
@@ -75,36 +196,24 @@ func DetailMahasiswa(c fiber.Ctx) error {
 		)
 	}
 
-	for i := 0; i < len(model.Daftar); i++ {
-		if model.Daftar[i].ID == id {
-			return c.JSON(fiber.Map{
-				"sukses": true,
-				"data":   model.Daftar[i],
-			})
+	err = repository.Pulihkan(uint(id))
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fiber.NewError(
+				fiber.StatusNotFound,
+				"Mahasiswa tidak ditemukan",
+			)
 		}
+
+		return fiber.NewError(
+			fiber.StatusInternalServerError,
+			"Gagal memulihkan data",
+		)
 	}
 
-	return fiber.NewError(
-		fiber.StatusNotFound,
-		"Mahasiswa tidak ditemukan",
-	)
-}
-
-// CariMahasiswaNIM mencari mahasiswa berdasarkan NIM.
-func CariMahasiswaNIM(c fiber.Ctx) error {
-	nim := c.Params("nim")
-
-	for i := 0; i < len(model.Daftar); i++ {
-		if model.Daftar[i].Nim == nim {
-			return c.JSON(fiber.Map{
-				"sukses": true,
-				"data":   model.Daftar[i],
-			})
-		}
-	}
-
-	return fiber.NewError(
-		fiber.StatusNotFound,
-		"Mahasiswa dengan NIM tersebut tidak ditemukan",
-	)
+	return c.JSON(fiber.Map{
+		"sukses": true,
+		"pesan":  "Data mahasiswa berhasil dipulihkan",
+	})
 }

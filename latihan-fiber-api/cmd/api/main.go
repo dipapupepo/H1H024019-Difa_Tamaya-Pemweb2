@@ -15,8 +15,13 @@ import (
 )
 
 func main() {
-	konf := config.Muat()
+    konf := config.Muat()
 
+    config.HubungkanBasisData(konf)
+    config.Migrasi()
+    config.DataAwal()
+
+    // bagian konfigurasi dan routing lainnya
 	app := fiber.New(fiber.Config{
 		AppName:      konf.NamaAplikasi,
 		ErrorHandler: penanganGalat,
